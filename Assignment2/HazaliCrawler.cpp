@@ -14,6 +14,9 @@
 
 using namespace std;
 
+const int DELAY = 10;		//time delay between HTTP GET requests
+const int MAXRECV = 140 * 1024;
+
 // Method to generate a GET HTTP request to be sent to server
 // host is the hostname of the server we're accessing
 // path is the path to the file we're requesting
@@ -60,6 +63,51 @@ string get_full_path(const string host, const string path) {
 	return full_path;
 }
 
+int connect(const string host, const string path) {
+	const int PORT = 80;
+
+	// setting up msock
+	int m_sock;
+	sockaddr_in m_addr;
+	memset(&m_addr, 0, sizeof(m_addr));
+	m_sock = socket(AF_INET, SOCK_STREAM, 0);
+
+	int on = 1;
+	if (setsockopt(m_sock, SOL_SOCKET, SO_REUSEADDR, (const char*) &on, sizeof(on)) == -1) {
+		return false;
+	}
+
+	// Connecting
+	m_addr.sin_family = AF_INET;
+	m_addr.sin_port = htons(PORT);
+	int status = inet_pton(AF_INET, host.c_str(), &m_addr.sin_addr);
+
+	if (errno == EAFNOSUPPORT) {
+		return false;
+	}
+
+	status = ::connect(m_sock, (sockaddr *) &m_addr, sizeof(m_addr));
+	
+	// Sending request
+	string req = request(host, path);
+	status = ::send(m_sock, req.c_str(), req.size(), MSG_NOSIGNAL);
+	char buf[MAXRECV];
+	cout<<"Request: "<<req<<endl;
+	cout<<"=========================="<<endl;
+
+	// Receiving Reply
+	string recv = "";
+	while (status != 0) {
+		memset(buf, 0, MAXRECV);
+		status = ::recv(m_sock, buf, MAXRECV, 0);
+		recv.append(buf);
+	}
+	cout<<"Response: "<<recv<<endl;
+	cout<<"=========================="<<endl;
+
+	// Parsing the data received
+}
+
 class HTMLpage{
 public:
 	string hostname;
@@ -76,6 +124,8 @@ public:
 	// Takes in the html file in the form of a string
 	// Returns either the hostname if found or an emptry string otherwise
 	string parseHTTP(const string str) {
+		//TODO: instead of (.*), regex is probably more accurate with ([a-zA-Z0-9]*)
+		//TODO: ?i doesn't seem to be correct
 		const boost::regex re("(?i)http://(.*)/?(.*)");
 		boost::smatch what;
 		if (boost::regex_match(str, what, re)) {
@@ -91,6 +141,7 @@ public:
 	// Returns either the page and the hostname if both are found
 	// Returns an empty string for page if page cannot be resolved
 	void parseHref(const string orig_host, string str) {
+		//TODO: same changes as above
 		const boost::regex re("(?i)http://(.*)/(.*)");
 		boost::smatch what;
 
