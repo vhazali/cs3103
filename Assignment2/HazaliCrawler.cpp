@@ -26,7 +26,7 @@
 using namespace std;
 using namespace boost;
 
-const int DELAY = 12;				// time delay between HTTP GET requests
+const int DELAY = 5;				// time delay between HTTP GET requests
 const int MAXRECV = 140 * 1024;		// max size of received file
 
 const bool DEBUG_MODE = true;
@@ -157,6 +157,9 @@ public:
 			hostname = what[1];
 			boost::algorithm::to_lower(hostname);
 			page = what[2];
+			if(page.back() != '/') {
+				page.append("/");
+			}
 		} else {
 			// cannot find page but can build hostname
 			hostname = orig_host;
@@ -206,7 +209,9 @@ int connect(const string host, const string path) {
 	m_addr.sin_port = htons(PORT);
 
 	string ipAdd = getIPfromHostname(host);
-	cout<< "ip Add: " << ipAdd << endl;
+	if (DEBUG_MODE) {
+		cout<< "ip Add: " << ipAdd << endl;
+	}
 	int status = inet_pton(AF_INET, ipAdd.c_str(), &m_addr.sin_addr);
 
 	if (errno == EAFNOSUPPORT) {
@@ -245,7 +250,7 @@ int connect(const string host, const string path) {
 	// Parsing the data received
 	try {
 		// Removes all carriage and return char
-		const boost::regex rmv_all("[\\r|\\n");
+		const boost::regex rmv_all("[\\r|\\n]");
 		const string s2 = boost::regex_replace(recv, rmv_all, "");
 		string s  = s2;
 
@@ -267,7 +272,7 @@ int connect(const string host, const string path) {
 				HTMLpage* page = new HTMLpage();
 				page -> parse (host, href);
 				const char* hrefc = page->page.c_str();
-				cout<<"Connecting to HTTP server with : "<< page->hostname << "page = " << hrefc << endl;
+				cout<<"Connecting to HTTP server with : "<< page->hostname << string_format("/%s",hrefc) << endl;
 				sleep(DELAY);
 				connect(page->hostname, string_format("/%s",hrefc));
 				delete page;
@@ -281,7 +286,8 @@ int connect(const string host, const string path) {
 
 int main() {
 	cout << "Program starting." << endl;
-	// Ignore sigpipe
+	// Catching sigpipe
+	// TODO: Remove
 	signal(SIGPIPE, SIG_IGN);
 	connect("www.comp.nus.edu.sg","/~vhazali/");
 	cout << "Program finished." << endl;
