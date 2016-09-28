@@ -27,7 +27,7 @@ using namespace std;
 using namespace boost;
 
 const int DELAY = 5;				// time delay between HTTP GET requests
-const int MAXRECV = 140 * 1024;		// max size of received file
+const int MAXRECV = 200 * 1024;		// max size of received file
 
 const bool DEBUG_MODE = true;
 
@@ -265,8 +265,11 @@ int connect(const string host, const string path) {
 		boost::sregex_token_iterator i(s.begin(), s.end(), re, subs);
 		boost::sregex_token_iterator j;
 
+		int count =0;
+
 		// Iterating through the listed HREFs and move to next request
-		for (; i !=j; j++) {
+		for (; i !=j; i++) {
+			cout<<"count : " << count++ <<endl;
 			const string href = *i;
 			if (href.length() != 0) {
 				HTMLpage* page = new HTMLpage();
@@ -276,6 +279,8 @@ int connect(const string host, const string path) {
 				sleep(DELAY);
 				connect(page->hostname, string_format("/%s",hrefc));
 				delete page;
+			} else {
+				cout<<"no href length"<<endl;
 			}
 		}
 	} catch (boost::regex_error& e) {
