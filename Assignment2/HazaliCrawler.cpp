@@ -244,7 +244,7 @@ int connect(const string host, const string path) {
 int main() {
 	cout << "Program starting." << endl;
 	// This is my personal website which contains a list of seed urls
-	connect("www.comp.nus.edu.sg","/~vhazali/");
+	connect("www.comp.nus.edu.sg","/");
 	cout << "Program finished." << endl;
 	return 0;
 }
