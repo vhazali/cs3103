@@ -126,70 +126,43 @@ public:
 		page = "";
 	}
 
-	// Method to parse the html file to look for hostname part of the url
-	// Takes in the html file in the form of a string
-	// Returns either the hostname if found or an emptry string otherwise
-	string parseHTTP(const string str) {
-		//TODO: instead of (.*), regex is probably more accurate with ([a-zA-Z0-9]*)
-		//TODO: ?i doesn't seem to be correct
-		const boost::regex re("(?i)http://(.*)/?(.*)");
-		boost::smatch what;
-		if (boost::regex_match(str, what, re)) {
-			string host = what[1];
-			boost::algorithm::to_lower(host);
-			cout<<"Parsing http\nstr: "<<str<<endl<<" output: "<<host<<endl;
-			return host;
-		}
-		// No match, return empty string
-		return "";
+void parsingHTMLpage(string htmlPage){
+	const boost::regex rmv_cr("[\\r|\\n]");
+	const string htmlWithoutCarriage = boost::regex_replace(input, rmv_all, "");
+
+	if(DEBUG_MODE) {
+		cout<<"html page after removing carriage return:\n===============================\n"
+			<<htmlWithoutCarriage<<"===============================\n";
 	}
 
-	// Method to parse the html file to look for hostname and page
-	// Takes in the html file in the form of a string and a string to denote the original host
-	// Returns either the page and the hostname if both are found
-	// Returns an empty string for page if page cannot be resolved
-	void parseHref(const string orig_host, string str) {
-		//TODO: same changes as above
-		const boost::regex re("(?i)http://(.*)/(.*)");
-		boost::smatch what;
+	boost::regex getURLregex("(?:(?:https?)://|www\.)(?:\([-a-zA-Z0-9+&@#\/%=~_|$?!:,.]*\)|[-a-zA-Z0-9+&@#\/%=~_|$?!:,.])*", boost::regex::perl);
+	boost::sregex_token_iterator iter(htmlWithoutCarriage.begin(), htmlWithoutCarriage.end(), expr, 0);
+	boost::sregex_token_iterator end;
 
-		if(boost::regex_match(str, what, re)) {
-			// found a full URL, parse out hostname and parse page
-			hostname = what[1];
-			boost::algorithm::to_lower(hostname);
-			page = what[2];
-			if(page.back() != '/') {
-				page.append("/");
+	// TODO: put into queue 
+	for(int counter=1; iter!=end; ++iter, ++counter) {
+		if(DEBUG_MODE){
+				cout<<counter<<": "<<*iter<<endl;
+		}
+	}
+
+// take in one url string
+// check against dictionary, if non existent, add to dictonary and queue
+// if existent do nothing
+void splitToHostNameAndPage(string url) {
+	boost::regex expr("^.*://(?:[wW]{3}\.)?([^:/]*)/(.*)$", boost::regex::perl);
+	boost::smatch what;
+
+	if (boost::regex_search (s, what, expr)){
+		for(int i=0;i<what.size();i++) {
+			if(DEBUG_MODE){
+						cout<<i<<	": "<<what[i]<<endl;
 			}
-		} else {
-			// cannot find page but can build hostname
-			hostname = orig_host;
-			page = "";
+			// TODO: Check against dictionary
 		}
-		cout<<"Paring href\norig_host: "<<orig_host<<"    str: "<<str<<endl<<"hostname:    "<<hostname<<"    page: "<<page<<endl<<endl;
-
 	}
+}
 
-	// Method to parse 
-	void parse(const string orig_host, const string hrf) {
-
-		cout<<"Parsing\norig_host: "<<orig_host<<"    hrf: "<<hrf<<endl<<endl;
-
-		const string host = parseHTTP(hrf);
-
-		if (!host.empty()) {
-			// Found a http:// prefix, try and find hostname and page
-			parseHref(orig_host, hrf);
-		} else {
-			hostname = orig_host;
-			page = hrf;
-		}
-
-		if (page.length() == 0) {
-			page ="/";
-		}
-		cout<<"End of parse\nhostname: "<<hostname<<"    page: "<<page<<endl<<endl;
-	}
 };
 
 int connect(const string host, const string path) {
@@ -256,44 +229,7 @@ int connect(const string host, const string path) {
 
 	// Parsing the data received
 	try {
-		// Removes all carriage and return char
-		const boost::regex rmv_all("[\\r|\\n]");
-		const string s2 = boost::regex_replace(recv, rmv_all, "");
-		string s  = s2;
-
-		// regex for <a href = " ">
-		// This regex allows for multiple whitespace inbetween a, href, the = and " "
-		// This reges also accounts for ' ' instead of just " "
-		const boost::regex re("<a\\s+href\\s*=\\s*(\"([^\"]*)\")|('([^']*)')\\s*>");
-		boost::cmatch matches;
-
-		// Use token iterator with sub matches
-		const int subs[] = {2, 4};
-		boost::sregex_token_iterator i(s.begin(), s.end(), re, subs);
-		boost::sregex_token_iterator j;
-
-		int count =0;
-
-		// Iterating through the listed HREFs and move to next request
-		for (; i !=j; i++) {
-			const string href = *i;
-			if(DEBUG_MODE) {
-				cout<< "count : " << count++ <<endl;
-				cout<< "href: " << href << endl;
-				cout<< "host: " << host << endl<<endl;
-			}
-			if (href.length() != 0) {
-				HTMLpage* page = new HTMLpage();
-				page -> parse (host, href);
-				const char* hrefc = page->page.c_str();
-				cout<<"Connecting to HTTP server with : "<< page->hostname << string_format("/%s",hrefc) << endl;
-				sleep(DELAY);
-				connect(page->hostname, string_format("/%s",hrefc));
-				delete page;
-			} else {
-				cout<<"no href length"<<endl;
-			}
-		}
+		//TODO: call parsers
 	} catch (boost::regex_error& e) {
 		cout << "Regex Error: " << e.what() << endl;
 	}
