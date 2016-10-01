@@ -29,6 +29,8 @@ using namespace boost;
 const int DELAY = 5;				// time delay between HTTP GET requests
 const int MAXRECV = 200 * 1024;		// max size of received file
 
+// Setting this flag to true allows the code to show a lot (you have been warned)
+// of debug information. This can help to better understand what's happening in the code.
 const bool DEBUG_MODE = true;
 
 // Method to generate a GET HTTP request to be sent to server
@@ -126,7 +128,7 @@ public:
 		page = "";
 	}
 
-void parsingHTMLpage(string htmlPage){
+void parseHTMLpage(string htmlPage){
 	const boost::regex rmv_cr("[\\r|\\n]");
 	const string htmlWithoutCarriage = boost::regex_replace(input, rmv_all, "");
 
@@ -144,6 +146,7 @@ void parsingHTMLpage(string htmlPage){
 		if(DEBUG_MODE){
 				cout<<counter<<": "<<*iter<<endl;
 		}
+		splitToHostNameAndPage(*iter);
 	}
 
 // take in one url string
@@ -159,6 +162,7 @@ void splitToHostNameAndPage(string url) {
 						cout<<i<<	": "<<what[i]<<endl;
 			}
 			// TODO: Check against dictionary
+			
 		}
 	}
 }
@@ -224,12 +228,14 @@ int connect(const string host, const string path) {
 		status = ::recv(m_sock, buf, MAXRECV, 0);
 		recv.append(buf);
 	}
-	cout<<"Response: "<<recv<<endl;
-	cout<<"=========================="<<endl;
+	if (DEBUG_MODE){
+		cout<<"Response: "<<recv<<endl;
+		cout<<"=========================="<<endl;
+	}
 
 	// Parsing the data received
 	try {
-		//TODO: call parsers
+		parseHTMLpage(recv);
 	} catch (boost::regex_error& e) {
 		cout << "Regex Error: " << e.what() << endl;
 	}
@@ -238,9 +244,7 @@ int connect(const string host, const string path) {
 
 int main() {
 	cout << "Program starting." << endl;
-	// Catching sigpipe
-	// TODO: Remove
-	// signal(SIGPIPE, SIG_IGN);
+	// This is my personal website which contains a list of seed urls
 	connect("www.comp.nus.edu.sg","/~vhazali/");
 	cout << "Program finished." << endl;
 	return 0;
