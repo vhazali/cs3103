@@ -116,21 +116,39 @@ string getIPfromHostname(const string hostname) {
 	return "";
 }
 
-class HTMLpage{
-public:
-	string hostname;
-	string page;
+// class HTMLpage{
+// public:
+// 	string hostname;
+// 	string page;
 
-	// Default Constructor
-	// Initialises hostname and page to empty strings
-	HTMLpage() {
-		hostname = "";
-		page = "";
+// 	// Default Constructor
+// 	// Initialises hostname and page to empty strings
+// 	HTMLpage() {
+// 		hostname = "";
+// 		page = "";
+// 	}
+
+// };
+// take in one url string
+// check against dictionary, if non existent, add to dictonary and queue
+// if existent do nothing
+void splitToHostNameAndPage(string url) {
+	boost::regex expr("^.*://(?:[wW]{3}\.)?([^:/]*)/(.*)$", boost::regex::perl);
+	boost::smatch what;
+
+	if (boost::regex_search (url, what, expr)){
+		for(int i=0;i<what.size();i++) {
+			if(DEBUG_MODE){
+				cout<<i<<	": "<<what[i]<<endl;
+			}
+		}
+			// TODO: Check against dictionary
 	}
+}
 
 void parseHTMLpage(string htmlPage){
 	const boost::regex rmv_cr("[\\r|\\n]");
-	const string htmlWithoutCarriage = boost::regex_replace(input, rmv_all, "");
+	const string htmlWithoutCarriage = boost::regex_replace(htmlPage, rmv_cr, "");
 
 	if(DEBUG_MODE) {
 		cout<<"html page after removing carriage return:\n===============================\n"
@@ -138,7 +156,7 @@ void parseHTMLpage(string htmlPage){
 	}
 
 	boost::regex getURLregex("(?:(?:https?)://|www\.)(?:\([-a-zA-Z0-9+&@#\/%=~_|$?!:,.]*\)|[-a-zA-Z0-9+&@#\/%=~_|$?!:,.])*", boost::regex::perl);
-	boost::sregex_token_iterator iter(htmlWithoutCarriage.begin(), htmlWithoutCarriage.end(), expr, 0);
+	boost::sregex_token_iterator iter(htmlWithoutCarriage.begin(), htmlWithoutCarriage.end(), getURLregex, 0);
 	boost::sregex_token_iterator end;
 
 	// TODO: put into queue 
@@ -148,26 +166,7 @@ void parseHTMLpage(string htmlPage){
 		}
 		splitToHostNameAndPage(*iter);
 	}
-
-// take in one url string
-// check against dictionary, if non existent, add to dictonary and queue
-// if existent do nothing
-void splitToHostNameAndPage(string url) {
-	boost::regex expr("^.*://(?:[wW]{3}\.)?([^:/]*)/(.*)$", boost::regex::perl);
-	boost::smatch what;
-
-	if (boost::regex_search (s, what, expr)){
-		for(int i=0;i<what.size();i++) {
-			if(DEBUG_MODE){
-						cout<<i<<	": "<<what[i]<<endl;
-			}
-			// TODO: Check against dictionary
-			
-		}
-	}
 }
-
-};
 
 int connect(const string host, const string path) {
 	const int PORT = 80;
