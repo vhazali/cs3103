@@ -137,6 +137,7 @@ public:
 		if (boost::regex_match(str, what, re)) {
 			string host = what[1];
 			boost::algorithm::to_lower(host);
+			cout<<"Parsing http\nstr: "<<str<<endl<<" output: "<<host<<endl;
 			return host;
 		}
 		// No match, return empty string
@@ -165,15 +166,20 @@ public:
 			hostname = orig_host;
 			page = "";
 		}
+		cout<<"Paring href\norig_host: "<<orig_host<<"    str: "<<str<<endl<<"hostname:    "<<hostname<<"    page: "<<page<<endl<<endl;
+
 	}
 
 	// Method to parse 
 	void parse(const string orig_host, const string hrf) {
+
+		cout<<"Parsing\norig_host: "<<orig_host<<"    hrf: "<<hrf<<endl<<endl;
+
 		const string host = parseHTTP(hrf);
 
 		if (!host.empty()) {
 			// Found a http:// prefix, try and find hostname and page
-			parseHref(host, hrf);
+			parseHref(orig_host, hrf);
 		} else {
 			hostname = orig_host;
 			page = hrf;
@@ -182,6 +188,7 @@ public:
 		if (page.length() == 0) {
 			page ="/";
 		}
+		cout<<"End of parse\nhostname: "<<hostname<<"    page: "<<page<<endl<<endl;
 	}
 };
 
@@ -269,8 +276,12 @@ int connect(const string host, const string path) {
 
 		// Iterating through the listed HREFs and move to next request
 		for (; i !=j; i++) {
-			cout<<"count : " << count++ <<endl;
 			const string href = *i;
+			if(DEBUG_MODE) {
+				cout<< "count : " << count++ <<endl;
+				cout<< "href: " << href << endl;
+				cout<< "host: " << host << endl<<endl;
+			}
 			if (href.length() != 0) {
 				HTMLpage* page = new HTMLpage();
 				page -> parse (host, href);
@@ -293,7 +304,7 @@ int main() {
 	cout << "Program starting." << endl;
 	// Catching sigpipe
 	// TODO: Remove
-	signal(SIGPIPE, SIG_IGN);
+	// signal(SIGPIPE, SIG_IGN);
 	connect("www.comp.nus.edu.sg","/~vhazali/");
 	cout << "Program finished." << endl;
 	return 0;
