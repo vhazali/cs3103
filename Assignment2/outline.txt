@@ -1,0 +1,19 @@
+outline
+
+
+main
+	worker function
+		have queue<url>, dictionary<hostname, time>
+		insert seed urls into queue, dictionary
+		connect to url(s) via connect function
+			time the time taken for rtt
+			parse html received
+				get all urls
+				split hostnames and page
+				check if hostname is already in dictionary
+				add to queue and map if not
+			save information to somewhere
+		exhaust queue
+		write to file on disk
+
+have some counter to know how many pages already visited to limit crawler
